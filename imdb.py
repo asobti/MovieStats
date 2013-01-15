@@ -130,7 +130,7 @@ class Imdb :
 
 if __name__ == "__main__" :
 	verbose = False
-
+	
 	for arg in sys.argv[1:] :
 		if str(arg).lower() == '--verbose' or str(arg).lower() == '-v' :
 			verbose = True
