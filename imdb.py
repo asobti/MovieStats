@@ -29,7 +29,7 @@ class Movie :
 		return (self.title + " " + self.year + " : " + str(self.ratings) + " ratings.").encode('utf-8')
 
 class Imdb :
-	def __init__(self, years, log) :
+	def __init__(self, years, threshold, log) :
 		# logger instance
 		self.log = log
 
@@ -40,7 +40,7 @@ class Imdb :
 		self.baseUrl = "http://www.imdb.com/search/title?count=100&sort=num_votes&title_type=feature&year="
 
 		# ignore movies with less that votingThreshold ratings
-		self.votingThreshold = 1000	
+		self.votingThreshold = threshold
 
 		# number of movies shown per page. Used to increment value of start
 		self.count = 100
@@ -129,12 +129,22 @@ class Imdb :
 
 
 if __name__ == "__main__" :
-	verbose = False
 	
+	# defaults
+	verbose = False
+	threshold = 500
+
+	# read-in command line args
 	for arg in sys.argv[1:] :
 		if str(arg).lower() == '--verbose' or str(arg).lower() == '-v' :
 			verbose = True
-			break
+		if str(arg).lower().startswith("--threshold=") :
+			threshString = str(arg).lower().replace("--threshold=", "")
+			try :
+				threshold = int(threshString)
+			except :
+				print 'Invalid value for threshold'
+				sys.exit(1)
 
 	# logger instance
 	log = Logger(verbose)
@@ -143,5 +153,5 @@ if __name__ == "__main__" :
 	endYear = 2012
 
 	years = range(startYear, endYear + 1)
-	imdb = Imdb(years, log)
+	imdb = Imdb(years, threshold, log)
 	imdb.begin()
