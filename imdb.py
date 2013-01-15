@@ -1,4 +1,5 @@
 import urllib2
+import sys
 from bs4 import BeautifulSoup
 
 class Movie :
@@ -20,21 +21,20 @@ class Imdb :
 		self.baseUrl = "http://www.imdb.com/search/title?count=100&sort=num_votes&title_type=feature&year="
 
 		# ignore movies with less that votingThreshold ratings
-		self.votingThreshold = 5000	
+		self.votingThreshold = 1000	
+
+		# number of movies shown per page. Used to increment value of start
+		self.count = 100
+
+		# collection of movies
+		self.movies = []
 		
-
+	'''
+		Begin the process of scraping, parsing for the years supplied in the constructor
+	'''
 	def begin(self) :
-		page = self.scrapeYear(self.years[12])
-
-		if page is not None :
-			movies = self.parseYear(page)
-			
-			print 'Count: ' + str(len(movies))
-
-			for movie in movies :
-				print movie
-				#pass
-
+		self.scrapeYear(self.years[12])
+		print 'Total movies picked up: ' + str(len(self.movies))
 
 	'''
 		Responsible for scraping all movies for the specified year that have 
@@ -43,41 +43,69 @@ class Imdb :
 	def scrapeYear(self, year) :
 		year = str(year)
 		start = 1
-		yearUrl = self.baseUrl + year + "&start="
+		yearUrl = self.baseUrl + year + "&start="		
 
-		url = yearUrl + str(start)
+		continueScraping = True
 
-		try :
-			return urllib2.urlopen(url).read()
-		except urllib2.HTTPError as e :
-			return None
+		while continueScraping :
+			print '[' + str(year) + '] Start = ' + str(start)
 
-	def parseYear(self, page) :
+			url = yearUrl + str(start)
+
+			try :
+				print 'Starting scrape...'
+				page = urllib2.urlopen(url).read()
+
+				print 'Starting parse...'
+				continueScraping = self.parsePage(page)
+				
+				start += self.count
+				
+			except urllib2.HTTPError as e :
+				print e
+			except :
+				print 'Error encountered'
+
+	'''
+		Parse a page of movies and append Movie items
+		into self.movie
+		Returns True if parsing should continue, else False
+		Based on self.votingThreshold
+	'''
+	def parsePage(self, page) :
+		# TO-DO: handle soup creation errors
 		soup = BeautifulSoup(str(page))
-		movies = []
-
-		for span in soup.find_all('span', class_="wlb_wrapper") :			
-			id = span['data-tconst']			
-			span = span.next_sibling
-
-			if len(span.string.strip()) == 0 :			
-				span = span.next_sibling
-
-			title = span.string
-			span = span.next_sibling
+		
+		for el in soup.find_all('span', class_="wlb_wrapper") :			
 			
-			if len(span.string.strip()) == 0 :			
-				span = span.next_sibling
+			id = el['data-tconst']			
+			el = el.next_sibling
 
-			year = span.string
+			if len(el.string.strip()) == 0 :			
+				el = el.next_sibling
 
-			ratings = int(soup.find('td', class_="sort_col").string.replace(',', ''))			
+			title = el.string
+			el = el.next_sibling
+			
+			if len(el.string.strip()) == 0 :			
+				el = el.next_sibling
 
-			movies.append(Movie(id, title, year, ratings))
+			year = el.string
+			
+			el = el.parent.next_sibling
 
-			#break
+			if len(el.string.strip()) == 0 :
+				el = el.next_sibling
 
-		return movies
+			ratings = int(el.string.replace(',', ''))
+			
+			if ratings < self.votingThreshold :
+				return False
+
+			self.movies.append(Movie(id, title, year, ratings))			
+			
+		print 'Movie count : ' + str(len(self.movies))
+		return True
 
 
 if __name__ == "__main__" :
