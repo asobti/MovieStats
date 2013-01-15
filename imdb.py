@@ -9,7 +9,7 @@ class Movie :
 		self.ratings = ratings
 
 	def __str__(self) :
-		return self.title + " " + self.year + " : " + str(self.ratings) + " ratings."
+		return (self.title + " " + self.year + " : " + str(self.ratings) + " ratings.").encode('utf-8')
 
 class Imdb :
 	def __init__(self, years) :
@@ -33,6 +33,7 @@ class Imdb :
 
 			for movie in movies :
 				print movie
+				#pass
 
 
 	'''
@@ -62,13 +63,13 @@ class Imdb :
 			if len(span.string.strip()) == 0 :			
 				span = span.next_sibling
 
-			title = unicode(span.string)
+			title = span.string
 			span = span.next_sibling
 			
 			if len(span.string.strip()) == 0 :			
 				span = span.next_sibling
 
-			year = unicode(span.string)
+			year = span.string
 
 			ratings = int(soup.find('td', class_="sort_col").string.replace(',', ''))			
 
