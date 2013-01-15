@@ -2,6 +2,22 @@ import urllib2
 import sys
 from bs4 import BeautifulSoup
 
+class Logger :
+	def __init__(self, verbose) :
+		self.verbose = verbose
+
+	def log(self, msg) :
+		if (self.verbose) :
+			print msg
+
+	# prints error even if verbose = False
+	def error(self, err) :
+		print err
+
+	def newline(self) :
+		if (self.verbose) :
+			print ''
+
 class Movie :
 	def __init__(self, id, title, year, ratings) :
 		self.id = id
@@ -13,7 +29,10 @@ class Movie :
 		return (self.title + " " + self.year + " : " + str(self.ratings) + " ratings.").encode('utf-8')
 
 class Imdb :
-	def __init__(self, years) :
+	def __init__(self, years, log) :
+		# logger instance
+		self.log = log
+
 		# the years to scrape
 		self.years = years
 
@@ -48,23 +67,23 @@ class Imdb :
 		continueScraping = True
 
 		while continueScraping :
-			print '[' + str(year) + '] Start = ' + str(start)
+			self.log.log('[' + str(year) + '] Start = ' + str(start))
 
 			url = yearUrl + str(start)
 
 			try :
-				print 'Starting scrape...'
+				self.log.log('Starting scrape...')
 				page = urllib2.urlopen(url).read()
 
-				print 'Starting parse...'
+				self.log.log('Starting parse...')
 				continueScraping = self.parsePage(page)
 				
 				start += self.count
 				
 			except urllib2.HTTPError as e :
-				print e
+				self.log.error(e)
 			except :
-				print 'Error encountered'
+				self.log.error('Error encountered')
 
 	'''
 		Parse a page of movies and append Movie items
@@ -104,15 +123,25 @@ class Imdb :
 
 			self.movies.append(Movie(id, title, year, ratings))			
 			
-		print 'Movie count : ' + str(len(self.movies))
+		self.log.log('Movie count : ' + str(len(self.movies)))
+		self.log.newline()
 		return True
 
 
 if __name__ == "__main__" :
-	
+	verbose = False
+
+	for arg in sys.argv[1:] :
+		if str(arg).lower() == '--verbose' or str(arg).lower() == '-v' :
+			verbose = True
+			break
+
+	# logger instance
+	log = Logger(verbose)
+
 	startYear = 2000
 	endYear = 2012
 
 	years = range(startYear, endYear + 1)
-	imdb = Imdb(years)
+	imdb = Imdb(years, log)
 	imdb.begin()
