@@ -131,10 +131,10 @@ class Imdb :
 				self.log.log('Skipping ' + str(id))
 				continue
 			
-			except peewee.MovieDoesNotExist :
+			except Movie.DoesNotExist :
 				# matching record not found. Let's go ahead and get the details
 				pass			
-
+			
 			info = self.getMovieInfo(id)
 
 			if info is not None :
