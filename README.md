@@ -10,7 +10,7 @@ Dependencies
 - [urllib2](http://docs.python.org/2/library/urllib2.html)
 
 
-Create a 'config.ini' file in the same directory as imdb.py with the following contents
+Create a _config.ini_ file in the same directory as _imdb.py_ with the following contents
 
 ```
 [database]
@@ -19,5 +19,5 @@ user = user_name
 passwd = password
 ```
 
-Replace user_name and password with your database credentials. 
-Make sure a database called 'imdb' exists.
+Replace *user_name* and _password_ with your database credentials. 
+Make sure a database called _imdb_ exists.
