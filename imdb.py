@@ -1,6 +1,10 @@
 import urllib2
 import sys
+import peewee
+import anyjson
+
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 class Logger :
 	def __init__(self, verbose) :
@@ -18,15 +22,19 @@ class Logger :
 		if (self.verbose) :
 			print ''
 
-class Movie :
-	def __init__(self, id, title, year, ratings) :
-		self.id = id
-		self.title = title
-		self.year = year
-		self.ratings = ratings
+class Movie(peewee.Model) :
+	id 			= peewee.CharField(primary_key=True, unique=True)
+	title 		= peewee.CharField()
+	year 		= peewee.IntegerField()
+	rated 		= peewee.CharField()
+	released 	= peewee.DateField(null=True)
+	runtime		= peewee.FloatField(null=True)
+	poster		= peewee.CharField()
+	rating 		= peewee.FloatField()
+	votes 		= peewee.IntegerField()	
 
-	def __str__(self) :
-		return (self.title + " " + self.year + " : " + str(self.ratings) + " ratings.").encode('utf-8')
+	class Meta :
+		database = peewee.MySQLDatabase('imdb', user='xbonez', passwd='passwd')		
 
 class Imdb :
 	def __init__(self, years, threshold, log) :
@@ -39,6 +47,9 @@ class Imdb :
 		# url that lists movies for a year sorted by num_votes (desc)
 		self.baseUrl = "http://www.imdb.com/search/title?count=100&sort=num_votes&title_type=feature&year="
 
+		# omdb api url
+		self.omdbUrl = "http://www.omdbapi.com/?i="
+
 		# ignore movies with less that votingThreshold ratings
 		self.votingThreshold = threshold
 
@@ -46,14 +57,22 @@ class Imdb :
 		self.count = 100
 
 		# collection of movies
-		self.movies = []
+		self.movies = 0
+
+		# create table
+		Movie.create_table(fail_silently=True)
+
 		
 	'''
 		Begin the process of scraping, parsing for the years supplied in the constructor
 	'''
 	def begin(self) :
+
+		#for year in self.years :
+		#	self.scrapeYear(year)
+
 		self.scrapeYear(self.years[12])
-		print 'Total movies picked up: ' + str(len(self.movies))
+		print 'Total movies saved: ' + str(self.movies)
 
 	'''
 		Responsible for scraping all movies for the specified year that have 
@@ -71,20 +90,21 @@ class Imdb :
 
 			url = yearUrl + str(start)
 
-			try :
-				self.log.log('Starting scrape...')
-				page = urllib2.urlopen(url).read()
+			#try :
+			self.log.log('Starting scrape...')
+			page = urllib2.urlopen(url).read()
 
-				self.log.log('Starting parse...')
-				continueScraping = self.parsePage(page)
-				
-				start += self.count
-				
+			self.log.log('Starting parse...')
+			continueScraping = self.parsePage(page)
+			
+			start += self.count
+			'''
 			except urllib2.HTTPError as e :
 				self.log.error(e)
-			except :
+			except Exception as e :
 				self.log.error('Error encountered')
-
+				self.log.error(e)
+			'''
 	'''
 		Parse a page of movies and append Movie items
 		into self.movie
@@ -95,37 +115,61 @@ class Imdb :
 		# TO-DO: handle soup creation errors
 		soup = BeautifulSoup(str(page))
 		
-		for el in soup.find_all('span', class_="wlb_wrapper") :			
-			
-			id = el['data-tconst']			
-			el = el.next_sibling
+		for el in soup.find_all('span', class_="wlb_wrapper") :
+			id = el['data-tconst']
+			info = self.getMovieInfo(id)
 
-			if len(el.string.strip()) == 0 :			
-				el = el.next_sibling
+			if info is not None :
+				# special case because omdb is outdated
+				if "N/A" in info['imdbVotes'] :
+					info['imdbVotes'] = '9,999'
 
-			title = el.string
-			el = el.next_sibling
-			
-			if len(el.string.strip()) == 0 :			
-				el = el.next_sibling
+				if "N/A" in info['imdbRating'] :
+					info['imdbRating'] = '0.0'
+				# end of special case handling
 
-			year = el.string
-			
-			el = el.parent.next_sibling
+				if int(info['imdbVotes'].replace(',', '')) < self.votingThreshold :
+					# we have reached the threshold. Time to exit
+					return False
+				else :
+					movie = self.createModel(info)
+					movie.save()
+					self.movies += 1
+					self.log.log('Saved movie ' + movie.title)
 
-			if len(el.string.strip()) == 0 :
-				el = el.next_sibling
-
-			ratings = int(el.string.replace(',', ''))
-			
-			if ratings < self.votingThreshold :
-				return False
-
-			self.movies.append(Movie(id, title, year, ratings))			
-			
-		self.log.log('Movie count : ' + str(len(self.movies)))
-		self.log.newline()
 		return True
+
+	def getMovieInfo(self, id) :
+		url = self.omdbUrl + str(id)
+
+		try :
+			infoStr = urllib2.urlopen(url).read()
+			infoObj = anyjson.deserialize(infoStr)
+			
+			return infoObj
+
+		except urllib2.HTTPError as e:
+			self.log.log("Error at url " + url)
+			self.log.log(e)
+			return None
+
+	def createModel(self, info) :
+		id = info['imdbID']
+		title = info['Title']
+		year = int(info['Year'])
+		rated = info['Rated']
+
+		try :
+			released = datetime.strptime(info['Released'], "%d %b %Y").date()
+		except ValueError :
+			released = None
+
+		runtime = 0.0 if "N/A" in info['Runtime'] else float(info['Runtime'].replace('h','.').replace('min','').replace(' ',''))
+		poster = info['Poster']
+		rating = float(info['imdbRating'])
+		votes = int(info['imdbVotes'].replace(',',''))
+
+		return Movie.create(id=id, title=title, year=year, rated=rated, released=released, runtime=runtime, poster=poster, rating=rating, votes=votes)
 
 
 if __name__ == "__main__" :
