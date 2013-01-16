@@ -34,7 +34,7 @@ class Movie(peewee.Model) :
 	votes 		= peewee.IntegerField()	
 
 	class Meta :
-		database = peewee.MySQLDatabase('imdb', user='xbonez', passwd='passwd')		
+		database = peewee.MySQLDatabase('imdb', user='user', passwd='passwd')		
 
 class Imdb :
 	def __init__(self, years, threshold, log) :
@@ -68,10 +68,10 @@ class Imdb :
 	'''
 	def begin(self) :
 
-		#for year in self.years :
-		#	self.scrapeYear(year)
+		for year in self.years :
+			self.scrapeYear(year)
 
-		self.scrapeYear(self.years[12])
+		#self.scrapeYear(self.years[12])
 		print 'Total movies saved: ' + str(self.movies)
 
 	'''
@@ -90,21 +90,21 @@ class Imdb :
 
 			url = yearUrl + str(start)
 
-			#try :
-			self.log.log('Starting scrape...')
-			page = urllib2.urlopen(url).read()
+			try :
+				self.log.log('Starting scrape...')
+				page = urllib2.urlopen(url).read()
 
-			self.log.log('Starting parse...')
-			continueScraping = self.parsePage(page)
+				self.log.log('Starting parse...')
+				continueScraping = self.parsePage(page)
+				
+				start += self.count
 			
-			start += self.count
-			'''
 			except urllib2.HTTPError as e :
 				self.log.error(e)
 			except Exception as e :
 				self.log.error('Error encountered')
 				self.log.error(e)
-			'''
+			
 	'''
 		Parse a page of movies and append Movie items
 		into self.movie
