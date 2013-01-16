@@ -22,7 +22,7 @@ class Logger :
 
 	# prints error even if verbose = False
 	def error(self, err) :
-		print '[Error] ' + str(err)
+		print '[Error] ' + str(err).encode('utf-8')
 
 	def newline(self) :
 		if (self.verbose) :
@@ -164,7 +164,10 @@ class Imdb :
 			infoStr = urllib2.urlopen(url).read()
 			infoObj = anyjson.deserialize(infoStr)
 			
-			return infoObj
+			if not infoObj.has_key('Error') :
+				return infoObj
+			else :
+				return None
 
 		except urllib2.URLError as e:
 			self.log.error("Error at url " + str(url))
