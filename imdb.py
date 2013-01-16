@@ -77,7 +77,7 @@ class Imdb :
 		for year in self.years :
 			self.scrapeYear(year)
 
-		#self.scrapeYear(self.years[12])
+		# self.scrapeYear(self.years[2])
 		print 'Total movies saved: ' + str(self.movies)
 
 	'''
@@ -105,7 +105,7 @@ class Imdb :
 				
 				start += self.count
 			
-			except urllib2.HTTPError as e :
+			except urllib2.URLError as e :
 				self.log.error(e)
 			except Exception as e :
 				self.log.error('Error encountered')
@@ -154,7 +154,7 @@ class Imdb :
 			
 			return infoObj
 
-		except urllib2.HTTPError as e:
+		except urllib2.URLError as e:
 			self.log.log("Error at url " + url)
 			self.log.log(e)
 			return None
