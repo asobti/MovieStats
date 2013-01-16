@@ -21,3 +21,14 @@ passwd = password
 
 Replace *user_name* and _password_ with your database credentials. 
 Make sure a database called _imdb_ exists.
+
+Usage
+-----
+
+```
+python imdb.py [--verbose] [--threshold=n]
+```
+
+Verbose mode prints copious logs to the console at every step of execution
+
+Threshold is the minimum number of user votes a movie must have for it to be picked up. Default value is 500, so movies that have less than 500 votes get ignored.
