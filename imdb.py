@@ -123,6 +123,18 @@ class Imdb :
 		
 		for el in soup.find_all('span', class_="wlb_wrapper") :
 			id = el['data-tconst']
+
+			try :
+				record = Movie.get(Movie.id == str(id))
+				# if exception was not thrown, a matching record was found
+				# continue to the next iteration
+				self.log.log('Skipping ' + str(id))
+				continue
+			
+			except peewee.MovieDoesNotExist :
+				# matching record not found. Let's go ahead and get the details
+				pass			
+
 			info = self.getMovieInfo(id)
 
 			if info is not None :
