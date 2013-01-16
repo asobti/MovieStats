@@ -237,9 +237,6 @@ if __name__ == "__main__" :
 	# logger instance
 	log = Logger(verbose)
 
-	startYear = 2000
-	endYear = 2012
-
 	years = range(startYear, endYear + 1)	
 
 	# init the db
