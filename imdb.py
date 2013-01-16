@@ -22,7 +22,7 @@ class Logger :
 
 	# prints error even if verbose = False
 	def error(self, err) :
-		print err
+		print '[Error] ' + str(err)
 
 	def newline(self) :
 		if (self.verbose) :
@@ -65,7 +65,7 @@ class Imdb :
 		# collection of movies
 		self.movies = 0
 
-		# create table
+		# create table if not exists
 		Movie.create_table(fail_silently=True)
 
 		
@@ -167,8 +167,8 @@ class Imdb :
 			return infoObj
 
 		except urllib2.URLError as e:
-			self.log.log("Error at url " + url)
-			self.log.log(e)
+			self.log.error("Error at url " + str(url))
+			self.log.error(e)
 			return None
 
 	def createModel(self, info) :
