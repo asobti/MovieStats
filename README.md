@@ -26,9 +26,14 @@ Usage
 -----
 
 ```
-python imdb.py [--verbose] [--threshold=n]
+python imdb.py [--verbose] [--threshold=n] [--start=s] [--end=e]
 ```
 
 Verbose mode prints copious logs to the console at every step of execution
 
-Threshold is the minimum number of user votes a movie must have for it to be picked up. Default value is 500, so movies that have less than 500 votes get ignored.
+--threshold is the minimum number of user votes a movie must have for it to be picked up. **Default value is 500**, so movies that have less than 500 votes get ignored.
+
+--start is the starting year from which movies will be picked up. **Default value is 2000**.
+--end is the ending year up to which movies will be picked up. **Default value is 2012**
+
+Format for --start and --end is YYYY.

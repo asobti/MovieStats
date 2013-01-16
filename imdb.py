@@ -195,19 +195,45 @@ if __name__ == "__main__" :
 	# defaults
 	verbose = False
 	threshold = 500
+	startYear = 2000
+	endYear = 2012
 
 	# read-in command line args
 	for arg in sys.argv[1:] :
 		if str(arg).lower() == '--verbose' or str(arg).lower() == '-v' :
 			verbose = True
-		if str(arg).lower().startswith("--threshold=") :
+		elif str(arg).lower().startswith("--threshold=") :
 			threshString = str(arg).lower().replace("--threshold=", "")
 			try :
 				threshold = int(threshString)
 			except :
 				print 'Invalid value for threshold'
 				sys.exit(1)
+		elif str(arg).lower().startswith("--start=") :
+			startString = str(arg).lower().replace("--start=", "")
+			try :
+				startYear = int(startString)
+				if startYear < 1900 :
+					print 'Start year must be greater than or equal to 1900'
+			except :
+				print 'Invalid value for start year'
+				sys.exit(1)
+		elif str(arg).lower().startswith("--end=") :
+			endString = str(arg).lower().replace("--end=","")
+			try :
+				endYear = int(endString)
+				if endYear > 2020 :
+					print 'End year must be less than or equal to 2020'
+					sys.exit(1)
+			except :
+				print 'Invalid value for end year'
+				sys.exit(1)
 
+	# startYear must be less or equal to than endYear
+	if startYear > endYear :
+		print 'Start year must be less than or equal to end year'
+		sys.exit(1)
+		
 	# logger instance
 	log = Logger(verbose)
 
