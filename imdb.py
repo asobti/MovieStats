@@ -5,6 +5,12 @@ import anyjson
 
 from bs4 import BeautifulSoup
 from datetime import datetime
+from ConfigParser import SafeConfigParser
+
+# db handle
+# there has to be a way to do this without putting it 
+# in the global namespace
+db = peewee.MySQLDatabase(None)
 
 class Logger :
 	def __init__(self, verbose) :
@@ -34,7 +40,7 @@ class Movie(peewee.Model) :
 	votes 		= peewee.IntegerField()	
 
 	class Meta :
-		database = peewee.MySQLDatabase('imdb', user='user', passwd='passwd')		
+		database = db	
 
 class Imdb :
 	def __init__(self, years, threshold, log) :
@@ -196,6 +202,17 @@ if __name__ == "__main__" :
 	startYear = 2000
 	endYear = 2012
 
-	years = range(startYear, endYear + 1)
+	years = range(startYear, endYear + 1)	
+
+	# init the db
+	parser = SafeConfigParser()
+	parser.read('config.ini')
+
+	dbname = parser.get('database', 'db')
+	user = parser.get('database', 'user')
+	passwd = parser.get('database', 'passwd')
+
+	db.init(dbname, user=user, passwd=passwd)
+
 	imdb = Imdb(years, threshold, log)
 	imdb.begin()
